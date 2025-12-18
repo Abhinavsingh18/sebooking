@@ -99,3 +99,109 @@ def bookings_by_mobile(mobile: str):
         })
 
     return result
+# ================= ADMIN LOGIN =================
+@app.post("/admin/login")
+def admin_login(data: dict):
+    admin = admins_col.find_one({
+        "username": data.get("username"),
+        "password": data.get("password")
+    })
+
+    if not admin:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    return {"status": "success"}
+# ================= ADD TEST =================
+@app.post("/admin/add_test")
+def add_test(data: dict):
+    if tests_col.find_one({"id": data["id"]}):
+        raise HTTPException(status_code=400, detail="Test ID already exists")
+
+    tests_col.insert_one({
+        "id": int(data["id"]),
+        "category": data["category"],
+        "test_name": data["test_name"]
+    })
+
+    return {"status": "test added"}
+# ================= ADD CENTER =================
+@app.post("/admin/add_center")
+def add_center(data: dict):
+    if centers_col.find_one({"id": data["id"]}):
+        raise HTTPException(status_code=400, detail="Center ID already exists")
+
+    centers_col.insert_one({
+        "id": int(data["id"]),
+        "center_name": data["center_name"],
+        "address": data["address"]
+    })
+
+    return {"status": "center added"}
+# ================= SET PRICE (ASSIGN TEST TO CENTER) =================
+@app.post("/admin/set_price")
+def set_price(data: dict):
+    prices_col.update_one(
+        {
+            "center_id": int(data["center_id"]),
+            "test_id": int(data["test_id"])
+        },
+        {
+            "$set": {
+                "price": float(data["price"])
+            }
+        },
+        upsert=True
+    )
+
+    return {"status": "price set"}
+# ================= CENTER LOGIN =================
+@app.post("/center/login")
+def center_login(data: dict):
+    user = center_users_col.find_one({
+        "username": data.get("username"),
+        "password": data.get("password")
+    })
+
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    center = centers_col.find_one({"id": user["center_id"]}, {"_id": 0})
+
+    return {
+        "center_id": user["center_id"],
+        "center_name": center["center_name"] if center else ""
+    }
+# ================= CENTER BOOKINGS =================
+@app.get("/center/bookings")
+def center_bookings(center_id: int):
+    bookings = list(bookings_col.find(
+        {"center_id": center_id},
+        {"_id": 0, "mobile": 0}   # ❌ hide mobile
+    ))
+
+    result = []
+    for b in bookings:
+        test = tests_col.find_one({"id": b["test_id"]}, {"_id": 0})
+
+        result.append({
+            "booking_id": b["booking_id"],
+            "patient_name": b["patient_name"],
+            "test_name": test["test_name"] if test else "",
+            "price": b["price"],
+            "status": b["status"],
+            "created_at": b["created_at"]
+        })
+
+    return result
+# ================= MARK BOOKING DONE =================
+@app.post("/center/mark_done")
+def mark_done(data: dict):
+    result = bookings_col.update_one(
+        {"booking_id": data.get("booking_id")},
+        {"$set": {"status": "Done"}}
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    return {"status": "updated"}

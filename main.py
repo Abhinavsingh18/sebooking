@@ -212,3 +212,39 @@ def mark_done(data: dict):
         raise HTTPException(status_code=404, detail="Booking not found")
 
     return {"status": "updated"}
+@app.get("/admin/centers")
+def get_centers():
+    return list(centers_col.find({}, {"_id": 0}))
+@app.get("/admin/tests")
+def get_tests():
+    return list(tests_col.find({}, {"_id": 0}))
+@app.get("/admin/center_tests")
+def center_tests():
+    result = []
+    for p in prices_col.find({}, {"_id": 0}):
+        center = centers_col.find_one({"id": p["center_id"]}, {"_id": 0})
+        test = tests_col.find_one({"id": p["test_id"]}, {"_id": 0})
+
+        result.append({
+            "center_id": p["center_id"],
+            "center_name": center["center_name"] if center else "",
+            "test_name": test["test_name"] if test else "",
+            "price": p["price"]
+        })
+
+    return result
+@app.get("/admin/center_users")
+def get_center_users():
+    return list(center_users_col.find({}, {"_id": 0}))
+@app.post("/admin/create_center_user")
+def create_center_user(data: dict):
+    if center_users_col.find_one({"username": data["username"]}):
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    center_users_col.insert_one({
+        "center_id": int(data["center_id"]),
+        "username": data["username"],
+        "password": data["password"]
+    })
+
+    return {"status": "center user created"}

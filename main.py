@@ -246,24 +246,25 @@ def admin_get_tests():
 def admin_pricing(center_id: int):
     result = []
 
-    # get all tests
     tests = list(tests_col.find({}, {"_id": 0}))
 
     for t in tests:
         price_row = prices_col.find_one(
             {
-                "center_id": center_id,
-                "test_id": t["id"]
+                "$or": [
+                    {"center_id": center_id, "test_id": t.get("id")},
+                    {"center_id": str(center_id), "test_id": t.get("id")}
+                ]
             },
             {"_id": 0}
         )
 
         result.append({
-            "test_id": t["id"],
-            "test_name": t["test_name"],
-            "category_id": t["category_id"],
-            "price": price_row["price"] if price_row else "",
-            "enabled": price_row["enabled"] if price_row else False
+            "test_id": t.get("id"),
+            "test_name": t.get("test_name", ""),
+            "category_id": t.get("category_id"),
+            "price": price_row.get("price") if price_row else "",
+            "enabled": price_row.get("enabled", False) if price_row else False
         })
 
     return result

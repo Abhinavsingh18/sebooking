@@ -242,33 +242,32 @@ def admin_get_centers():
 def admin_get_tests():
     return list(tests_col.find({}, {"_id": 0}))
 
-@app.get("/admin/center_tests")
-def center_tests():
+@app.get("/admin/pricing")
+def admin_pricing(center_id: int):
     result = []
 
-    prices = list(prices_col.find({}, {"_id": 0}))
+    # get all tests
+    tests = list(tests_col.find({}, {"_id": 0}))
 
-    for p in prices:
-        center = centers_col.find_one(
-            {"id": p.get("center_id")},
-            {"_id": 0}
-        )
-
-        test = tests_col.find_one(
-            {"id": p.get("test_id")},
+    for t in tests:
+        price_row = prices_col.find_one(
+            {
+                "center_id": center_id,
+                "test_id": t["id"]
+            },
             {"_id": 0}
         )
 
         result.append({
-            "center_id": p.get("center_id"),
-            "center_name": center.get("center_name") if center else "",
-            "test_id": p.get("test_id"),
-            "test_name": test.get("test_name") if test else "",
-            "price": p.get("price", ""),
-            "enabled": p.get("enabled", False)
+            "test_id": t["id"],
+            "test_name": t["test_name"],
+            "category_id": t["category_id"],
+            "price": price_row["price"] if price_row else "",
+            "enabled": price_row["enabled"] if price_row else False
         })
 
     return result
+
 
 
 @app.get("/admin/center_users")

@@ -245,18 +245,29 @@ def admin_get_tests():
 @app.get("/admin/center_tests")
 def center_tests():
     result = []
-    for p in prices_col.find({}, {"_id": 0}):
-        center = centers_col.find_one({"id": p["center_id"]}, {"_id": 0})
-        test = tests_col.find_one({"id": p["test_id"]}, {"_id": 0})
 
-        result.append({
-            "center_id": p["center_id"],
-            "center_name": center["center_name"] if center else "",
-            "test_name": test["test_name"] if test else "",
-            "price": p["price"]
-        })
+    centers = list(centers_col.find({}, {"_id": 0}))
+    tests = list(tests_col.find({}, {"_id": 0}))
+
+    for center in centers:
+        for test in tests:
+            price_doc = prices_col.find_one({
+                "center_id": center["id"],
+                "test_id": test["id"]
+            })
+
+            result.append({
+                "center_id": center["id"],
+                "center_name": center["center_name"],
+                "test_id": test["id"],
+                "test_name": test["test_name"],
+                "category_id": test.get("category_id"),
+                "price": price_doc["price"] if price_doc else "",
+                "enabled": price_doc["enabled"] if price_doc else False
+            })
 
     return result
+
 @app.get("/admin/center_users")
 def get_center_users():
     return list(center_users_col.find({}, {"_id": 0}))

@@ -6,8 +6,10 @@ from database import (
     prices_col,
     bookings_col,
     admins_col,
-    center_users_col
+    center_users_col,
+    categories_col
 )
+
 import time
 
 app = FastAPI()
@@ -27,14 +29,25 @@ def home():
 
 # ---------------- GET TESTS ----------------
 @app.get("/get_tests")
-def get_tests(category: str):
-    tests = list(tests_col.find({"category": category}, {"_id": 0}))
-    return tests
+def get_tests(category_id: int):
+    return list(
+        tests_col.find(
+            {"category_id": category_id},
+            {"_id": 0}
+        )
+    )
+
 
 # ---------------- GET CENTERS ----------------
 @app.get("/get_centers")
 def get_centers(test_id: int):
-    prices = list(prices_col.find({"test_id": test_id}, {"_id": 0}))
+    prices = list(
+        prices_col.find(
+            {"test_id": test_id, "enabled": True},
+            {"_id": 0}
+        )
+    )
+
 
     result = []
     for p in prices:
@@ -121,16 +134,16 @@ def admin_login(data: dict):
 # ================= ADD TEST =================
 @app.post("/admin/add_test")
 def add_test(data: dict):
-    if tests_col.find_one({"id": data["id"]}):
-        raise HTTPException(status_code=400, detail="Test ID already exists")
+    if tests_col.find_one({"test_name": data["test_name"]}):
+        raise HTTPException(status_code=400, detail="Test already exists")
 
     tests_col.insert_one({
-        "id": int(data["id"]),
-        "category": data["category"],
+        "id": int(time.time()),
+        "category_id": data["category_id"],
         "test_name": data["test_name"]
     })
-
     return {"status": "test added"}
+
 # ================= ADD CENTER =================
 @app.post("/admin/add_center")
 def add_center(data: dict):
@@ -154,13 +167,14 @@ def set_price(data: dict):
         },
         {
             "$set": {
-                "price": float(data["price"])
+                "price": float(data["price"]),
+                "enabled": bool(data.get("enabled", True))
             }
         },
         upsert=True
     )
+    return {"status": "price updated"}
 
-    return {"status": "price set"}
 # ================= CENTER LOGIN =================
 @app.post("/center/login")
 def center_login(data: dict):
@@ -221,11 +235,13 @@ def mark_done(data: dict):
 
     return {"status": "updated"}
 @app.get("/admin/centers")
-def get_centers():
+def admin_get_centers():
     return list(centers_col.find({}, {"_id": 0}))
+
 @app.get("/admin/tests")
-def get_tests():
+def admin_get_tests():
     return list(tests_col.find({}, {"_id": 0}))
+
 @app.get("/admin/center_tests")
 def center_tests():
     result = []
@@ -256,3 +272,36 @@ def create_center_user(data: dict):
     })
 
     return {"status": "center user created"}
+
+# ================= ADD CATEGORY =================
+@app.post("/admin/add_category")
+def add_category(data: dict):
+    if categories_col.find_one({"name": data["name"]}):
+        raise HTTPException(status_code=400, detail="Category exists")
+
+    categories_col.insert_one({
+        "id": int(time.time()),
+        "name": data["name"]
+    })
+    return {"status": "category added"}
+
+
+# ================= GET CATEGORIES =================
+@app.get("/admin/categories")
+def get_categories():
+    return list(categories_col.find({}, {"_id": 0}))
+
+@app.post("/admin/update_center_user")
+def update_center_user(data: dict):
+    result = center_users_col.update_one(
+        {"center_id": int(data["center_id"])},
+        {"$set": {
+            "username": data["username"],
+            "password": data["password"]
+        }}
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Center user not found")
+
+    return {"status": "center user updated"}

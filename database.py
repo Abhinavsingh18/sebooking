@@ -2,7 +2,6 @@ from pymongo import MongoClient
 import os
 
 MONGO_URL = os.getenv("MONGO_URL")
-
 if not MONGO_URL:
     raise Exception("MONGO_URL not set")
 
@@ -15,6 +14,7 @@ centers_col = db["centers"]
 prices_col = db["prices"]
 bookings_col = db["bookings"]
 
-# ADMIN & CENTER AUTH
-admins_col = db["admins"]            # ✅ REQUIRED
-center_users_col = db["center_users"] # ✅ REQUIRED
+# ADMIN
+admins_col = db["admins"]
+center_users_col = db["center_users"]
+categories_col = db["categories"]  # ✅ ADD THIS

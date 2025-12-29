@@ -305,6 +305,23 @@ def add_category(data: dict):
 def get_categories():
     return list(categories_col.find({}, {"_id": 0}))
 
+# UPDATE CENTER DETAILS
+@app.post("/admin/update_center")
+def update_center(data: dict):
+    result = centers_col.update_one(
+        {"id": int(data["id"])},
+        {"$set": {
+            "center_name": data["center_name"],
+            "address": data["address"]
+        }}
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Center not found")
+
+    return {"status": "center updated"}
+
+
 @app.post("/admin/update_center_user")
 def update_center_user(data: dict):
     result = center_users_col.update_one(

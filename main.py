@@ -358,3 +358,24 @@ def toggle_center(data: dict):
 
     return {"status": "updated"}
 
+
+@app.get("/admin/bookings")
+def admin_all_bookings():
+    bookings = list(bookings_col.find({}, {"_id": 0}))
+
+    result = []
+    for b in bookings:
+        test = tests_col.find_one({"id": b["test_id"]}, {"_id": 0})
+        center = centers_col.find_one({"id": b["center_id"]}, {"_id": 0})
+
+        result.append({
+            "booking_id": b["booking_id"],
+            "patient_name": b["patient_name"],
+            "mobile": b["mobile"],
+            "test_name": test["test_name"] if test else "",
+            "center_name": center["center_name"] if center else "",
+            "status": b["status"],
+            "created_at": b["created_at"]
+        })
+
+    return result

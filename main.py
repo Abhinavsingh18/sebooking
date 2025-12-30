@@ -51,7 +51,7 @@ def get_centers(test_id: int):
     result = []
     for p in prices:
         center = centers_col.find_one(
-            {"id": p["center_id"]},
+            {"id": p["center_id"], "enabled": True},
             {"_id": 0, "id": 1, "center_name": 1, "address": 1}
         )
         if center:
@@ -148,15 +148,16 @@ def add_test(data: dict):
 @app.post("/admin/add_center")
 def add_center(data: dict):
     if centers_col.find_one({"id": data["id"]}):
-        raise HTTPException(status_code=400, detail="Center ID already exists")
+        raise HTTPException(status_code=400, detail="Center exists")
 
     centers_col.insert_one({
         "id": int(data["id"]),
         "center_name": data["center_name"],
-        "address": data["address"]
+        "address": data["address"],
+        "enabled": True   # ✅ DEFAULT ON
     })
-
     return {"status": "center added"}
+
 # ================= SET PRICE (ASSIGN TEST TO CENTER) =================
 @app.post("/admin/set_price")
 def set_price(data: dict):
@@ -344,3 +345,16 @@ def update_test(data: dict):
         {"$set": {"test_name": data["test_name"]}}
     )
     return {"status": "updated"}
+
+@app.post("/admin/toggle_center")
+def toggle_center(data: dict):
+    result = centers_col.update_one(
+        {"id": int(data["center_id"])},
+        {"$set": {"enabled": bool(data["enabled"])}}
+    )
+
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Center not found")
+
+    return {"status": "updated"}
+

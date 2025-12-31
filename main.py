@@ -323,9 +323,10 @@ def update_center(data: dict):
         "address": data["address"],
     }
 
-    # ✅ Only update lat/lng if they are actually sent
-    if data.get("lat") is not None and data.get("lng") is not None:
+    if "lat" in data and data["lat"] is not None:
         update_data["lat"] = float(data["lat"])
+
+    if "lng" in data and data["lng"] is not None:
         update_data["lng"] = float(data["lng"])
 
     result = centers_col.update_one(
@@ -337,6 +338,7 @@ def update_center(data: dict):
         raise HTTPException(status_code=404, detail="Center not found")
 
     return {"status": "center updated"}
+
 
 @app.post("/admin/update_center_user")
 def update_center_user(data: dict):

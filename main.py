@@ -151,11 +151,14 @@ def add_center(data: dict):
         raise HTTPException(status_code=400, detail="Center exists")
 
     centers_col.insert_one({
-        "id": int(data["id"]),
+        "id": data["id"],
         "center_name": data["center_name"],
         "address": data["address"],
-        "enabled": True   # ✅ DEFAULT ON
+        "lat": data.get("lat"),
+        "lng": data.get("lng"),
+        "enabled": True
     })
+
     return {"status": "center added"}
 
 # ================= SET PRICE (ASSIGN TEST TO CENTER) =================
@@ -309,19 +312,25 @@ def get_categories():
 # UPDATE CENTER DETAILS
 @app.post("/admin/update_center")
 def update_center(data: dict):
+    update_data = {
+        "center_name": data["center_name"],
+        "address": data["address"],
+    }
+
+    # ✅ Only update lat/lng if they are actually sent
+    if data.get("lat") is not None and data.get("lng") is not None:
+        update_data["lat"] = float(data["lat"])
+        update_data["lng"] = float(data["lng"])
+
     result = centers_col.update_one(
         {"id": int(data["id"])},
-        {"$set": {
-            "center_name": data["center_name"],
-            "address": data["address"]
-        }}
+        {"$set": update_data}
     )
 
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Center not found")
 
     return {"status": "center updated"}
-
 
 @app.post("/admin/update_center_user")
 def update_center_user(data: dict):

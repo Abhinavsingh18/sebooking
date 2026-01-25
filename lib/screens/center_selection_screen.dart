@@ -120,11 +120,36 @@ class _CenterSelectionScreenState extends State<CenterSelectionScreen> {
                 children: [
                   Text(c['address']),
                   Text('₹${c['price']}'),
+                  
+                  // 🕒 DISPLAY TIMINGS
+                  if (c['timings'] != null && (c['timings'] as List).isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: (c['timings'] as List).map((t) {
+                          return Row(
+                            children: [
+                              const Icon(Icons.access_time,
+                                  size: 12, color: Colors.grey),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${t['label']}: ${t['time']}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+
                   if (dist != null)
                     Text(
                       '${dist.toStringAsFixed(1)} km away',
-                      style: const TextStyle(
-                          color: Colors.green),
+                      style: const TextStyle(color: Colors.green),
                     ),
                 ],
               ),

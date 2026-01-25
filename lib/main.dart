@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
 
 import 'config.dart';
 
@@ -64,7 +65,7 @@ class SeBookingApp extends StatelessWidget {
           const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
       ),
-      home: const HomeScreen(),
+      home: const SplashScreen(),
     );
   }
 }

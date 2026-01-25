@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 import 'test_category_screen.dart';
 import 'booking_history_screen.dart';
+import 'about_us_screen.dart';
 import '../center/center_login_screen.dart';
 import '../admin/admin_login_screen.dart';
 import '../config.dart';
@@ -288,6 +290,57 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               },
             ),
+
+            
+            const SizedBox(height: 40),
+            
+            // Developer Attribution
+             Center(
+                child: InkWell(
+                  onTap: () async {
+                     final Uri url = Uri.parse('https://bufferworks.in/');
+                     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                       debugPrint('Could not launch $url');
+                     }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "Developed by",
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              "Bufferworks",
+                              style: TextStyle(
+                                color: Color(0xFF1976D2), // Primary Blue
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.open_in_new,
+                              size: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
           ],
         ),
        ),
@@ -375,6 +428,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (_) => const BookingHistoryScreen(),
+                ),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.info_outline),
+            title: const Text('About Us'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AboutUsScreen(),
                 ),
               );
             },

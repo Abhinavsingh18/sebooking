@@ -79,7 +79,7 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
           title: Text('Agent: $agentName'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: "Book Test"),
+              Tab(text: "Book Service"),
               Tab(text: "My History"),
             ],
             labelColor: Colors.white,
@@ -114,13 +114,13 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Book Test for Patient',
+                  'Book Service for Customer',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Patient Name', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(labelText: 'Customer Name', border: OutlineInputBorder()),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -218,7 +218,7 @@ class _AgentHomeScreenState extends State<AgentHomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => TestCategoryScreen(
+            builder: (_) => ServiceCategoryScreen(
               categoryId: category['id'],
               categoryName: category['name'],
               patientName: name,
@@ -380,11 +380,11 @@ class _AgentHistoryTabState extends State<AgentHistoryTab> {
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   child: ListTile(
-                    title: Text(b['patient_name']),
+                    title: Text(b['customer_name']),
                       subtitle: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text("${b['test_name']} @ ${b['center_name']}"),
+                          Text("${b['service_name']} @ ${b['center_name']}"),
                           Text("Date: $dateStr", style: const TextStyle(fontSize: 11, color: Colors.grey)),
                           Row(
                             children: [

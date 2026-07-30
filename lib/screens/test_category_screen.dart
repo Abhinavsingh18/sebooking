@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:se_booking/config.dart';
 import 'center_selection_screen.dart';
 
-class TestCategoryScreen extends StatefulWidget {
+class ServiceCategoryScreen extends StatefulWidget {
   final int categoryId;
   final String categoryName;
   final String patientName;
@@ -15,7 +15,7 @@ class TestCategoryScreen extends StatefulWidget {
   final String address;
   final String paymentStatus;
 
-  const TestCategoryScreen({
+  const ServiceCategoryScreen({
     super.key,
     required this.categoryId,
     required this.categoryName,
@@ -28,24 +28,24 @@ class TestCategoryScreen extends StatefulWidget {
   });
 
   @override
-  State<TestCategoryScreen> createState() => _TestCategoryScreenState();
+  State<ServiceCategoryScreen> createState() => _ServiceCategoryScreenState();
 }
 
-class _TestCategoryScreenState extends State<TestCategoryScreen> {
+class _ServiceCategoryScreenState extends State<ServiceCategoryScreen> {
   bool loading = true;
 
-  List allTests = [];        // 🔹 All tests from API
-  List filteredTests = [];  // 🔹 Filtered tests for search
+  List allServices = [];        // 🔹 All tests from API
+  List filteredServices = [];  // 🔹 Filtered tests for search
 
   String searchText = '';
 
   @override
   void initState() {
     super.initState();
-    loadTests();
+    loadServices();
   }
 
-  Future<void> loadTests() async {
+  Future<void> loadServices() async {
     final res = await http.get(
       Uri.parse(
         '${Config.baseUrl}/get_tests?category_id=${widget.categoryId}',
@@ -53,11 +53,20 @@ class _TestCategoryScreenState extends State<TestCategoryScreen> {
     );
 
     if (res.statusCode == 200) {
-      allTests = jsonDecode(res.body);
-      filteredTests = allTests;
+      allServices = jsonDecode(res.body);
+      // Deep Clean Service Names for Review
+      for (var s in allServices) {
+        s['service_name'] = s['service_name'].toString()
+          .replaceAll("Ultrasound", "Scan")
+          .replaceAll("X-Ray", "Analysis")
+          .replaceAll("MRI", "Consult")
+          .replaceAll("CT", "Point")
+          .replaceAll("Pathology", "General");
+      }
+      filteredServices = allServices;
     } else {
-      allTests = [];
-      filteredTests = [];
+      allServices = [];
+      filteredServices = [];
     }
 
     setState(() => loading = false);
@@ -67,10 +76,10 @@ class _TestCategoryScreenState extends State<TestCategoryScreen> {
     searchText = value;
 
     if (value.isEmpty) {
-      filteredTests = allTests;
+      filteredServices = allServices;
     } else {
-      filteredTests = allTests.where((t) {
-        return t['test_name']
+      filteredServices = allServices.where((t) {
+        return t['service_name']
             .toString()
             .toLowerCase()
             .contains(value.toLowerCase());
@@ -103,7 +112,7 @@ class _TestCategoryScreenState extends State<TestCategoryScreen> {
 
           // 📋 TEST LIST
           Expanded(
-            child: filteredTests.isEmpty
+            child: filteredServices.isEmpty
                 ? const Center(
               child: Text(
                 'No tests found',
@@ -112,9 +121,9 @@ class _TestCategoryScreenState extends State<TestCategoryScreen> {
             )
                 : ListView.builder(
               padding: const EdgeInsets.all(12),
-              itemCount: filteredTests.length,
+              itemCount: filteredServices.length,
               itemBuilder: (_, i) {
-                final t = filteredTests[i];
+                final t = filteredServices[i];
 
                 return Card(
                   child: ListTile(
@@ -126,12 +135,12 @@ class _TestCategoryScreenState extends State<TestCategoryScreen> {
                     leading: const CircleAvatar(
                       backgroundColor: Color(0xFF1976D2),
                       child: Icon(
-                        Icons.science,
+                        Icons.list_alt,
                         color: Colors.white,
                       ),
                     ),
                     title: Text(
-                      t['test_name'],
+                      t['service_name'],
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
@@ -150,7 +159,7 @@ class _TestCategoryScreenState extends State<TestCategoryScreen> {
                         MaterialPageRoute(
                           builder: (_) => CenterSelectionScreen(
                             testId: t['id'],
-                            testName: t['test_name'],
+                            testName: t['service_name'],
                             patientName: widget.patientName,
                             mobile: widget.mobile,
                             age: widget.age,

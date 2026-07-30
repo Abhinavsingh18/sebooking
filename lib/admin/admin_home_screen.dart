@@ -41,7 +41,7 @@ class AdminHomeScreen extends StatelessWidget {
         children: [
           _item(context, 'Centers & Logins', const CentersScreen()),
           _item(context, 'Categories', const CategoriesScreen()),
-          _item(context, 'Tests', const TestsScreen()),
+          _item(context, 'Services', const ServicesScreen()),
           _item(context, 'Pricing (Center Wise)', const PricingCentersScreen()),
           _item(context, 'All Center Bookings', const AdminAllBookingsScreen()),
           _item(context, 'Manage Home Notice', const ManageNoticeScreen()),

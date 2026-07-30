@@ -5,7 +5,7 @@
 # Proxy API requests to avoid Mixed Content errors
 [[redirects]]
   from = "/api/*"
-  to = "http://147.79.71.199:8000/:splat"
+  to = "https://api.sebooking.in/:splat"
   status = 200
   force = true
 

@@ -207,7 +207,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        "X-Ray • Ultrasound • MRI • CT Scan",
+                        "Professional • Expert • Efficient",
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 15,

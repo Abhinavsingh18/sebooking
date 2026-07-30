@@ -91,7 +91,7 @@ class AboutUsScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     Text(
-                      'Welcome to SE Booking, your trusted partner for hassle-free medical diagnostic appointments. We simplify the process of booking essential tests like X-Rays, Ultrasounds, MRIs, and CT Scans.',
+                      'Welcome to SE Booking, your simplified solution for professional service management and center-based appointments. We streamline the process of booking specialized professional services across multiple sectors.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 15,
@@ -102,7 +102,7 @@ class AboutUsScreen extends StatelessWidget {
                     const SizedBox(height: 20),
                     const Divider(),
                     const SizedBox(height: 20),
-                    _buildFeatureRow(Icons.medical_services, 'Wide Range of Tests'),
+                    _buildFeatureRow(Icons.business_center, 'Wide Range of Services'),
                     _buildFeatureRow(Icons.calendar_month, 'Instant Booking'),
                     _buildFeatureRow(Icons.history, 'Digital Records'),
                     _buildFeatureRow(Icons.support_agent, '24/7 Support'),

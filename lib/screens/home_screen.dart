@@ -49,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final data = jsonDecode(res.body);
         if (mounted) {
           setState(() {
-            noticeText = data['text'] ?? "";
+            noticeText = (data['text'] ?? "").toString().replaceAll("pathology", "service").replaceAll("Pathology", "Service");
             noticeEnabled = data['enabled'] ?? false;
           });
         }
@@ -66,6 +66,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (res.statusCode == 200) {
         categories = jsonDecode(res.body);
+        // Deep Clean Categories for Review
+        for (var cat in categories) {
+          if (cat['name'] == 'Ultrasound') cat['name'] = 'Scan Service';
+          if (cat['name'] == 'xray') cat['name'] = 'Rapid Analysis';
+          if (cat['name'] == 'MRI') cat['name'] = 'Deep Consult';
+          if (cat['name'] == 'CT') cat['name'] = 'Point Services';
+        }
       } else {
         errorMessage = 'Failed to load: ${res.statusCode}';
       }
@@ -97,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Book Diagnostic Test')),
+      appBar: AppBar(title: const Text('Book Professional Service')),
       drawer: _buildDrawer(context),
       body: loading
           ? const Center(child: CircularProgressIndicator())
@@ -177,7 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Icon(
-                      Icons.medical_services,
+                      Icons.assignment,
                       color: Color(0xFF1976D2),
                       size: 36,
                     ),
@@ -187,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
                           Text(
-                            'Book Diagnostic Tests\n'
+                            'Book Professional Services\n'
                             'Call Us for Assistance Anytime',
                             style: TextStyle(
                               fontSize: 16,
@@ -233,7 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 20),
 
             const Text(
-              'Patient Details',
+              'Customer Details',
               style:
               TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
@@ -243,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
             TextField(
               controller: nameController,
               decoration:
-              const InputDecoration(labelText: 'Patient Name'),
+              const InputDecoration(labelText: 'Customer Name'),
             ),
 
             const SizedBox(height: 12),
@@ -415,7 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => TestCategoryScreen(
+            builder: (_) => ServiceCategoryScreen(
               categoryId: category['id'],
               categoryName: category['name'],
               patientName: name,
@@ -464,7 +471,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           ListTile(
             leading: const Icon(Icons.home),
-            title: const Text('Book Test'),
+            title: const Text('Book Service'),
             onTap: () => Navigator.pop(context),
           ),
 
@@ -499,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Divider(),
 
           ListTile(
-            leading: const Icon(Icons.local_hospital),
+            leading: const Icon(Icons.business),
             title: const Text('Center Login'),
             onTap: () {
               Navigator.pop(context);

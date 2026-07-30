@@ -59,7 +59,7 @@ class PdfService {
                                     fontSize: 24,
                                     fontWeight: pw.FontWeight.bold,
                                     color: PdfColors.blue900)),
-                            pw.Text('Diagnostic Test Booking',
+                            pw.Text('Professional Service Booking',
                                 style: const pw.TextStyle(
                                     fontSize: 12, color: PdfColors.grey700)),
                           ],
@@ -109,7 +109,7 @@ class PdfService {
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Text('Patient Details',
+                          pw.Text('Customer Details',
                               style: pw.TextStyle(
                                   fontSize: 14,
                                   fontWeight: pw.FontWeight.bold,
@@ -134,13 +134,13 @@ class PdfService {
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
                         children: [
-                          pw.Text('Test Information',
+                          pw.Text('Service Information',
                               style: pw.TextStyle(
                                   fontSize: 14,
                                   fontWeight: pw.FontWeight.bold,
                                   color: PdfColors.blue800)),
                           pw.Divider(color: PdfColors.grey300),
-                          _buildRow('Test Name', testName),
+                          _buildRow('Service Name', testName),
                           _buildRow('Center Name', centerName),
                           pw.SizedBox(height: 5),
                           pw.Row(

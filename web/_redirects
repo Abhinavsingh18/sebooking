@@ -1,5 +1,5 @@
 # Proxy API requests to backend
-/api/*  http://147.79.71.199:8000/:splat  200!
+/api/*  https://api.sebooking.in/:splat  200!
 
 # SPA Fallback
 /*  /index.html  200

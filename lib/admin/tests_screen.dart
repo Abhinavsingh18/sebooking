@@ -3,14 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:se_booking/config.dart';
 
-class TestsScreen extends StatefulWidget {
-  const TestsScreen({super.key});
+class ServicesScreen extends StatefulWidget {
+  const ServicesScreen({super.key});
 
   @override
-  State<TestsScreen> createState() => _TestsScreenState();
+  State<ServicesScreen> createState() => _ServicesScreenState();
 }
 
-class _TestsScreenState extends State<TestsScreen> {
+class _ServicesScreenState extends State<ServicesScreen> {
   List tests = [];
   List categories = [];
   bool loading = true;
@@ -34,14 +34,14 @@ class _TestsScreenState extends State<TestsScreen> {
   }
 
   // ---------------- ADD TEST ----------------
-  void addTest() {
+  void addService() {
     final nameCtrl = TextEditingController();
     int? categoryId;
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Add Test'),
+        title: const Text('Add Service'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -60,7 +60,7 @@ class _TestsScreenState extends State<TestsScreen> {
             const SizedBox(height: 10),
             TextField(
               controller: nameCtrl,
-              decoration: const InputDecoration(labelText: 'Test Name'),
+              decoration: const InputDecoration(labelText: 'Service Name'),
             ),
           ],
         ),
@@ -74,7 +74,7 @@ class _TestsScreenState extends State<TestsScreen> {
                 headers: {'Content-Type': 'application/json'},
                 body: jsonEncode({
                   "category_id": categoryId,
-                  "test_name": nameCtrl.text,
+                  "service_name": nameCtrl.text,
                 }),
               );
 
@@ -89,16 +89,16 @@ class _TestsScreenState extends State<TestsScreen> {
   }
 
   // ---------------- UPDATE TEST ----------------
-  void editTest(Map test) {
-    final ctrl = TextEditingController(text: test['test_name']);
+  void editService(Map test) {
+    final ctrl = TextEditingController(text: test['service_name']);
 
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Update Test Name'),
+        title: const Text('Update Service Name'),
         content: TextField(
           controller: ctrl,
-          decoration: const InputDecoration(labelText: 'Test Name'),
+          decoration: const InputDecoration(labelText: 'Service Name'),
         ),
         actions: [
           TextButton(
@@ -113,8 +113,8 @@ class _TestsScreenState extends State<TestsScreen> {
                 Uri.parse('${Config.baseUrl}/admin/update_test'),
                 headers: {'Content-Type': 'application/json'},
                 body: jsonEncode({
-                  "test_id": test['id'],
-                  "test_name": ctrl.text,
+                  "service_id": test['id'],
+                  "service_name": ctrl.text,
                 }),
               );
 
@@ -132,18 +132,18 @@ class _TestsScreenState extends State<TestsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tests')),
+      appBar: AppBar(title: const Text('Services')),
       floatingActionButton:
-      FloatingActionButton(onPressed: addTest, child: const Icon(Icons.add)),
+      FloatingActionButton(onPressed: addService, child: const Icon(Icons.add)),
       body: loading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
         padding: const EdgeInsets.all(12),
         children: categories.map<Widget>((cat) {
-          final catTests =
+          final catServices =
           tests.where((t) => t['category_id'] == cat['id']).toList();
 
-          if (catTests.isEmpty) return const SizedBox();
+          if (catServices.isEmpty) return const SizedBox();
 
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
@@ -160,13 +160,13 @@ class _TestsScreenState extends State<TestsScreen> {
                     ),
                   ),
                   const Divider(),
-                  ...catTests.map(
+                  ...catServices.map(
                         (t) => ListTile(
-                      title: Text(t['test_name']),
+                      title: Text(t['service_name']),
                       dense: true,
                       trailing: IconButton(
                         icon: const Icon(Icons.edit, size: 20),
-                        onPressed: () => editTest(t),
+                        onPressed: () => editService(t),
                       ),
                     ),
                   ),

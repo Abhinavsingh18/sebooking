@@ -383,7 +383,7 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                               fontSize: 12, color: Colors.grey),
                         ),
                         const SizedBox(height: 8),
-                        // 🆕 New Patient Details
+                        // 🆕 New Customer Details
                         if (b['age'] != null || b['address'] != null) ...[
                           Text(
                             '${b['age'] ?? 'N/A'} Yrs | ${b['gender'] ?? 'N/A'}',

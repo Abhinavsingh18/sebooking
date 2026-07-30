@@ -40,7 +40,7 @@ class _PricingDetailScreenState extends State<PricingDetailScreen> {
       tests = jsonDecode(testRes.body);
 
       for (var t in tests) {
-        final int testId = t['test_id'];
+        final int testId = t['service_id'];
         priceCtrls.putIfAbsent(
           testId,
               () => TextEditingController(
@@ -62,7 +62,7 @@ class _PricingDetailScreenState extends State<PricingDetailScreen> {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         "center_id": widget.centerId,
-        "test_id": testId,
+        "service_id": testId,
         "price": double.tryParse(priceCtrls[testId]?.text ?? '') ?? 0,
         "enabled": enabled,
       }),
@@ -88,11 +88,11 @@ class _PricingDetailScreenState extends State<PricingDetailScreen> {
           : ListView(
         padding: const EdgeInsets.all(12),
         children: categories.map<Widget>((cat) {
-          final catTests = tests
+          final catServices = tests
               .where((t) => t['category_id'] == cat['id'])
               .toList();
 
-          if (catTests.isEmpty) return const SizedBox();
+          if (catServices.isEmpty) return const SizedBox();
 
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
@@ -109,15 +109,15 @@ class _PricingDetailScreenState extends State<PricingDetailScreen> {
                     ),
                   ),
                   const Divider(),
-                  ...catTests.map((t) {
-                    final int testId = t['test_id'];
+                  ...catServices.map((t) {
+                    final int testId = t['service_id'];
                     final bool enabled = t['enabled'] ?? false;
 
                     return Column(
                       children: [
                         Row(
                           children: [
-                            Expanded(child: Text(t['test_name'])),
+                            Expanded(child: Text(t['service_name'])),
                             Switch(
                               value: enabled,
                               onChanged: (v) {

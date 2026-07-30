@@ -8,7 +8,7 @@ import 'package:se_booking/config.dart';
 class ApiService {
   static String get baseUrl => Config.baseUrl;
 
-  static Future<List> getServices(String category) async {
+  static Future<List> getTests(String category) async {
     final res = await http.get(
       Uri.parse('$baseUrl/get_tests?category=$category'),
     );
@@ -22,7 +22,7 @@ class ApiService {
     return json.decode(res.body);
   }
 
-  static Future<String> bookService({
+  static Future<String> bookTest({
     required String name,
     required String mobile,
     required String age,

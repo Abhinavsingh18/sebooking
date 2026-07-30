@@ -102,7 +102,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
 
     setState(() => loading = true);
 
-    final bookingId = await ApiService.bookService(
+    final bookingId = await ApiService.bookTest(
       name: _nameController.text,
       mobile: _mobileController.text,
       age: _ageController.text,
@@ -217,8 +217,8 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // 1. Customer Details Form
-          TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Customer Name *', border: OutlineInputBorder())),
+          // 1. Patient Details Form
+          TextField(controller: _nameController, decoration: const InputDecoration(labelText: 'Patient Name *', border: OutlineInputBorder())),
           const SizedBox(height: 12),
           TextField(controller: _mobileController, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Mobile Number *', border: OutlineInputBorder())),
           const SizedBox(height: 12),
@@ -239,12 +239,12 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
           
           const SizedBox(height: 24),
           
-          // 2. Service Information
-          const Text("Service Information", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          // 2. Test Information
+          const Text("Test Information", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const Divider(),
           ListTile(
             title: Text(widget.testName),
-            subtitle: const Text("Service Name"),
+            subtitle: const Text("Test Name"),
             dense: true,
           ),
           ListTile(

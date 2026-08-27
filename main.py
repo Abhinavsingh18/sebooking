@@ -17,8 +17,8 @@ from database import (
 import time
 import razorpay
 
-RAZORPAY_KEY_ID = "rzp_test_TUf5qpKwVrX0md"
-RAZORPAY_KEY_SECRET = "Btp2Udir2SLJ6K576jatiF4n"
+RAZORPAY_KEY_ID = "rzp_test_TUhQRyYIroBgEx"
+RAZORPAY_KEY_SECRET = "70DK3sqiKP1qjR28KLcevEyi"
 razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 app = FastAPI()

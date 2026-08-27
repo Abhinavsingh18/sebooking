@@ -149,7 +149,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
           _openRazorpayWeb(orderId, amount);
         } else {
           var options = {
-            'key': 'rzp_test_TUf5qpKwVrX0md', // Razorpay Key ID
+            'key': 'rzp_test_TUhQRyYIroBgEx', // Razorpay Key ID
             'amount': amount,
             'name': 'Samriddhi Enterprises',
             'description': 'Booking for ${widget.testName}',
@@ -175,7 +175,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   void _openRazorpayWeb(String orderId, int amount) {
     try {
       var options = {
-        'key': 'rzp_test_TUf5qpKwVrX0md',
+        'key': 'rzp_test_TUhQRyYIroBgEx',
         'amount': amount,
         'name': 'Samriddhi Enterprises',
         'description': 'Booking for ${widget.testName}',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/pdf_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 class ConfirmBookingScreen extends StatefulWidget {
   final int testId;
@@ -47,7 +48,8 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   final _ageController = TextEditingController();
   final _addressController = TextEditingController();
   String _gender = 'Male';
-  int _selectedQrIndex = 0;
+  late Razorpay _razorpay;
+  String _currentBookingId = "";
 
   @override
   void initState() {
@@ -66,6 +68,17 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
     } else {
       _amountController.text = "0";
     }
+
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
   }
 
   Future<void> _checkAgent() async {
@@ -95,30 +108,92 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       return;
     }
 
-    if (!isAgent && _txnController.text.length < 4) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter valid Transaction ID (min 4 chars)')));
+    if (!isAgent && _mobileController.text.length < 10) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter valid Mobile Number')));
       return;
     }
 
     setState(() => loading = true);
 
-    final bookingId = await ApiService.bookTest(
-      name: _nameController.text,
-      mobile: _mobileController.text,
-      age: _ageController.text,
-      gender: _gender,
-      address: _addressController.text,
-      centerId: widget.centerId,
-      testId: widget.testId,
-      price: widget.price,
-      paymentStatus: isAgent ? widget.paymentStatus : "Pending Verification (Txn: ${_txnController.text})",
-      paidAmount: isAgent 
-          ? (double.tryParse(_amountController.text) ?? 0.0) 
-          : widget.price,
-    );
-    
-    // ... rest of method (showSuccessDialog)
+    try {
+      final bookingId = await ApiService.bookTest(
+        name: _nameController.text,
+        mobile: _mobileController.text,
+        age: _ageController.text,
+        gender: _gender,
+        address: _addressController.text,
+        centerId: widget.centerId,
+        testId: widget.testId,
+        price: widget.price,
+        paymentStatus: isAgent ? widget.paymentStatus : "Pending Payment",
+        paidAmount: isAgent 
+            ? (double.tryParse(_amountController.text) ?? 0.0) 
+            : 0.0,
+      );
+      
+      _currentBookingId = bookingId;
 
+      if (!isAgent) {
+        // Razorpay Flow
+        final orderResponse = await ApiService.createPaymentOrder(bookingId);
+        final orderId = orderResponse["order_id"];
+        final amount = orderResponse["amount"];
+        
+        var options = {
+          'key': 'rzp_test_TUf5qpKwVrX0md', // Razorpay Key ID
+          'amount': amount,
+          'name': 'Mahakal Events',
+          'description': 'Booking for ${widget.testName}',
+          'order_id': orderId,
+          'prefill': {
+            'contact': _mobileController.text,
+            'email': 'customer@example.com'
+          },
+          'theme': {'color': '#11612b'}
+        };
+        
+        _razorpay.open(options);
+        // Loading state remains true until payment resolves
+      } else {
+        setState(() => loading = false);
+        _showSuccessDialog(_currentBookingId, false);
+      }
+    } catch (e) {
+      setState(() => loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    try {
+      await ApiService.verifyPayment(
+        bookingId: _currentBookingId,
+        orderId: response.orderId!,
+        paymentId: response.paymentId!,
+        signature: response.signature!,
+      );
+      
+      setState(() => loading = false);
+      _showSuccessDialog(_currentBookingId, true);
+    } catch (e) {
+      setState(() => loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Payment verification failed: $e')));
+    }
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    setState(() => loading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Payment failed: ${response.message}")));
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    setState(() => loading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("External Wallet Selected: ${response.walletName}")));
+  }
+
+  void _showSuccessDialog(String bookingId, bool isOnlinePaid) {
     if (!mounted) return;
 
     showDialog(
@@ -165,8 +240,8 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
             const SizedBox(height: 12),
 
             Text(
-              (!isAgent && _txnController.text.isNotEmpty)
-                  ? 'Payment verification pending.\nPlease show this Booking ID at the center.'
+              isOnlinePaid
+                  ? 'Payment successful.\nPlease show this Booking ID at the center.'
                   : 'Please show this receipt at the center.',
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 14),
@@ -190,7 +265,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                 'price': widget.price,
                 'payment_status': isAgent 
                     ? widget.paymentStatus 
-                    : "Pending Verification (Txn: ${_txnController.text})",
+                    : (isOnlinePaid ? "Paid" : "Pending Payment"),
               };
               debugPrint("Generating PDF with data: $bookingData");
               PdfService.generateAndOpenPdf(context, bookingData);
@@ -270,56 +345,20 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
              const SizedBox(height: 12),
              TextField(controller: _amountController, readOnly: true, decoration: const InputDecoration(labelText: 'Amount Collected (₹)', border: OutlineInputBorder())),
           ] else ...[
-             const Center(child: Text("Scan & Pay via UPI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
+             const Center(child: Text("Pay Securely Online", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16))),
              const SizedBox(height: 12),
-             
-             Row(
-               mainAxisAlignment: MainAxisAlignment.center,
-               children: [
-                 ChoiceChip(
-                   label: const Text("BharatPe"),
-                   selected: _selectedQrIndex == 0,
-                   onSelected: (v) => setState(() => _selectedQrIndex = 0),
-                 ),
-                 const SizedBox(width: 12),
-                 ChoiceChip(
-                   label: const Text("Paytm"),
-                   selected: _selectedQrIndex == 1,
-                   onSelected: (v) => setState(() => _selectedQrIndex = 1),
-                 ),
-               ],
-             ),
-             
-             const SizedBox(height: 12),
-             Center(
-                child: Container(
-                  decoration: BoxDecoration(border: Border.all(color: Colors.grey)),
-                  child: Image.asset(
-                    _selectedQrIndex == 0 ? "assets/qr_codes/bharatpe_qr.jpg" : "assets/qr_codes/paytm_qr.jpg",
-                    height: 300, 
-                    fit: BoxFit.contain,
-                    errorBuilder: (_,__,___) => const SizedBox(height: 200, width: 200, child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.broken_image, size: 50), Text("QR not found")])),
-                  ),
-                ),
-             ),
+             const Text("You will be securely redirected to Razorpay to complete your payment.", style: TextStyle(color: Colors.grey, fontSize: 13), textAlign: TextAlign.center),
              const SizedBox(height: 16),
-             TextField(
-               controller: _txnController,
-               decoration: const InputDecoration(labelText: "Enter UPI Transaction ID", hintText: "Required", border: OutlineInputBorder()),
-               onChanged: (v) => setState((){}),
-             ),
-             const SizedBox(height: 8),
-             const Text("Booking will be 'Pending Verification'.", style: TextStyle(color: Colors.orange, fontSize: 12)),
-          ],
+           ],
 
-          const SizedBox(height: 32),
+           const SizedBox(height: 32),
 
-          // 4. Submit Button
-          ElevatedButton(
-            onPressed: loading || (!isAgent && _txnController.text.length < 4) ? null : book,
-            style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
-            child: loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Confirm & Book', style: TextStyle(fontSize: 18)),
-          ),
+           // 4. Submit Button
+           ElevatedButton(
+             onPressed: loading ? null : book,
+             style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+             child: loading ? const CircularProgressIndicator(color: Colors.white) : Text(isAgent ? 'Confirm & Book' : 'Pay ₹${widget.price.toStringAsFixed(0)} & Book', style: const TextStyle(fontSize: 18)),
+           ),
           const SizedBox(height: 40),
         ],
       ),

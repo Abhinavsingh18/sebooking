@@ -15,6 +15,11 @@ from database import (
 )
 
 import time
+import razorpay
+
+RAZORPAY_KEY_ID = "rzp_test_TUf5qpKwVrX0md"
+RAZORPAY_KEY_SECRET = "Btp2Udir2SLJ6K576jatiF4n"
+razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 app = FastAPI()
 
@@ -507,6 +512,73 @@ def update_payment(data: dict):
     return {"status": "updated"}
 
 # ================= UPDATE PAYMENT COLLECTION DETAILS (ADMIN & OTHERS) =================
+@app.post("/create_payment_order")
+def create_payment_order(data: dict):
+    booking_id = data.get("booking_id")
+    booking = bookings_col.find_one({"booking_id": booking_id})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+
+    amount = int(float(booking.get("price", 0)) * 100) # Razorpay accepts amount in paise
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Invalid amount for payment")
+
+    try:
+        order = razorpay_client.order.create({
+            "amount": amount,
+            "currency": "INR",
+            "receipt": booking_id,
+            "notes": {
+                "booking_id": booking_id,
+                "patient_name": booking.get("patient_name", "")
+            }
+        })
+        
+        # Save order ID in db
+        bookings_col.update_one(
+            {"booking_id": booking_id},
+            {"$set": {"razorpay_order_id": order["id"]}}
+        )
+
+        return {"order_id": order["id"], "amount": amount, "currency": "INR"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/verify_payment")
+def verify_payment(data: dict):
+    booking_id = data.get("booking_id")
+    razorpay_order_id = data.get("razorpay_order_id")
+    razorpay_payment_id = data.get("razorpay_payment_id")
+    razorpay_signature = data.get("razorpay_signature")
+
+    try:
+        # This will throw an exception if signature is invalid
+        razorpay_client.utility.verify_payment_signature({
+            'razorpay_order_id': razorpay_order_id,
+            'razorpay_payment_id': razorpay_payment_id,
+            'razorpay_signature': razorpay_signature
+        })
+
+        # Signature is valid, update booking
+        bookings_col.update_one(
+            {"booking_id": booking_id},
+            {"$set": {
+                "payment_status": "Paid",
+                "razorpay_payment_id": razorpay_payment_id,
+                "razorpay_order_id": razorpay_order_id,
+                "razorpay_signature": razorpay_signature
+            }}
+        )
+        return {"status": "success", "message": "Payment verified successfully"}
+    except razorpay.errors.SignatureVerificationError:
+        bookings_col.update_one(
+            {"booking_id": booking_id},
+            {"$set": {"payment_status": "Failed"}}
+        )
+        raise HTTPException(status_code=400, detail="Payment verification failed: Invalid signature")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.post("/update_payment_details")
 def update_payment_details(data: dict):
     booking_id = data.get("booking_id")

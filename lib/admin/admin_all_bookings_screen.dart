@@ -453,7 +453,25 @@ class _AdminAllBookingsScreenState extends State<AdminAllBookingsScreen> {
                                              ],
                                            ),
                                          ),
+                                      ] else if (payStatus == 'Paid' && totalPaid == 0) ...[
+                                          // Online Payment Case (Paid but not manually collected)
+                                          const Divider(height: 12),
+                                          _infoRow('Price', '₹${price.toStringAsFixed(0)}'),
+                                          const SizedBox(height: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+                                            decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(4), border: Border.all(color: Colors.green.shade200)),
+                                            child: const Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.verified, color: Colors.green, size: 16),
+                                                SizedBox(width: 6),
+                                                Text("PAID ONLINE (RAZORPAY)", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13)),
+                                              ],
+                                            ),
+                                          ),
                                       ] else ...[
+                                          // Manual Collection Case
                                           const Divider(height: 12),
                                           _infoRow('Price', '₹${price.toStringAsFixed(0)}'),
                                           const SizedBox(height: 4),

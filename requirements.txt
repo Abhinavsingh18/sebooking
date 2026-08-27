@@ -2,3 +2,4 @@ fastapi
 uvicorn
 pymongo
 python-dotenv
+razorpay==1.4.1

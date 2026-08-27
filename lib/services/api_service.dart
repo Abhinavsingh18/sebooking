@@ -169,4 +169,40 @@ class ApiService {
     final res = await http.get(Uri.parse(url));
     return json.decode(res.body);
   }
+
+  static Future<Map<String, dynamic>> createPaymentOrder(String bookingId) async {
+    final res = await http.post(
+      Uri.parse('${Config.baseUrl}/create_payment_order'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({"booking_id": bookingId}),
+    );
+    if (res.statusCode == 200) {
+      return json.decode(res.body);
+    } else {
+      throw Exception('Failed to create payment order');
+    }
+  }
+
+  static Future<Map<String, dynamic>> verifyPayment({
+    required String bookingId,
+    required String orderId,
+    required String paymentId,
+    required String signature,
+  }) async {
+    final res = await http.post(
+      Uri.parse('${Config.baseUrl}/verify_payment'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        "booking_id": bookingId,
+        "razorpay_order_id": orderId,
+        "razorpay_payment_id": paymentId,
+        "razorpay_signature": signature,
+      }),
+    );
+    if (res.statusCode == 200) {
+      return json.decode(res.body);
+    } else {
+      throw Exception('Payment verification failed');
+    }
+  }
 }

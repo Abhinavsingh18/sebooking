@@ -151,7 +151,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
           var options = {
             'key': 'rzp_test_TUf5qpKwVrX0md', // Razorpay Key ID
             'amount': amount,
-            'name': 'Mahakal Events',
+            'name': 'Samriddhi Enterprises',
             'description': 'Booking for ${widget.testName}',
             'order_id': orderId,
             'prefill': {
@@ -177,7 +177,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       var options = {
         'key': 'rzp_test_TUf5qpKwVrX0md',
         'amount': amount,
-        'name': 'Mahakal Events',
+        'name': 'Samriddhi Enterprises',
         'description': 'Booking for ${widget.testName}',
         'order_id': orderId,
         'prefill': {

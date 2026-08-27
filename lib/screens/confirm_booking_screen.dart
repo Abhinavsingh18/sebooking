@@ -3,6 +3,8 @@ import '../services/api_service.dart';
 import '../services/pdf_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:js' as js;
 
 class ConfirmBookingScreen extends StatefulWidget {
   final int testId;
@@ -48,7 +50,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   final _ageController = TextEditingController();
   final _addressController = TextEditingController();
   String _gender = 'Male';
-  late Razorpay _razorpay;
+  Razorpay? _razorpay;
   String _currentBookingId = "";
 
   @override
@@ -69,15 +71,19 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       _amountController.text = "0";
     }
 
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    if (!kIsWeb) {
+      _razorpay = Razorpay();
+      _razorpay!.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccessMobile);
+      _razorpay!.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentErrorMobile);
+      _razorpay!.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWalletMobile);
+    }
   }
 
   @override
   void dispose() {
-    _razorpay.clear();
+    if (!kIsWeb && _razorpay != null) {
+      _razorpay!.clear();
+    }
     super.dispose();
   }
 
@@ -139,21 +145,23 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
         final orderId = orderResponse["order_id"];
         final amount = orderResponse["amount"];
         
-        var options = {
-          'key': 'rzp_test_TUf5qpKwVrX0md', // Razorpay Key ID
-          'amount': amount,
-          'name': 'Mahakal Events',
-          'description': 'Booking for ${widget.testName}',
-          'order_id': orderId,
-          'prefill': {
-            'contact': _mobileController.text,
-            'email': 'customer@example.com'
-          },
-          'theme': {'color': '#11612b'}
-        };
-        
-        _razorpay.open(options);
-        // Loading state remains true until payment resolves
+        if (kIsWeb) {
+          _openRazorpayWeb(orderId, amount);
+        } else {
+          var options = {
+            'key': 'rzp_test_TUf5qpKwVrX0md', // Razorpay Key ID
+            'amount': amount,
+            'name': 'Mahakal Events',
+            'description': 'Booking for ${widget.testName}',
+            'order_id': orderId,
+            'prefill': {
+              'contact': _mobileController.text,
+              'email': 'customer@example.com'
+            },
+            'theme': {'color': '#11612b'}
+          };
+          _razorpay!.open(options);
+        }
       } else {
         setState(() => loading = false);
         _showSuccessDialog(_currentBookingId, false);
@@ -164,13 +172,50 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
     }
   }
 
-  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+  void _openRazorpayWeb(String orderId, int amount) {
+    try {
+      var options = {
+        'key': 'rzp_test_TUf5qpKwVrX0md',
+        'amount': amount,
+        'name': 'Mahakal Events',
+        'description': 'Booking for ${widget.testName}',
+        'order_id': orderId,
+        'prefill': {
+          'contact': _mobileController.text,
+          'email': 'customer@example.com'
+        },
+        'theme': {'color': '#11612b'},
+        'handler': js.allowInterop((response) {
+          final paymentId = response['razorpay_payment_id'] ?? '';
+          final signature = response['razorpay_signature'] ?? '';
+          final respOrderId = response['razorpay_order_id'] ?? orderId;
+          _verifyPaymentOnline(respOrderId, paymentId, signature);
+        }),
+        'modal': {
+          'ondismiss': js.allowInterop(() {
+            setState(() => loading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Payment cancelled by user")));
+          })
+        }
+      };
+
+      var rzp = js.JsObject(js.context['Razorpay'], [js.JsObject.jsify(options)]);
+      rzp.callMethod('open');
+    } catch (e) {
+      setState(() => loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error opening Razorpay: $e")));
+    }
+  }
+
+  void _verifyPaymentOnline(String orderId, String paymentId, String signature) async {
     try {
       await ApiService.verifyPayment(
         bookingId: _currentBookingId,
-        orderId: response.orderId!,
-        paymentId: response.paymentId!,
-        signature: response.signature!,
+        orderId: orderId,
+        paymentId: paymentId,
+        signature: signature,
       );
       
       setState(() => loading = false);
@@ -181,13 +226,17 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
     }
   }
 
-  void _handlePaymentError(PaymentFailureResponse response) {
+  void _handlePaymentSuccessMobile(PaymentSuccessResponse response) {
+    _verifyPaymentOnline(response.orderId!, response.paymentId!, response.signature!);
+  }
+
+  void _handlePaymentErrorMobile(PaymentFailureResponse response) {
     setState(() => loading = false);
     ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Payment failed: ${response.message}")));
   }
 
-  void _handleExternalWallet(ExternalWalletResponse response) {
+  void _handleExternalWalletMobile(ExternalWalletResponse response) {
     setState(() => loading = false);
     ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("External Wallet Selected: ${response.walletName}")));
